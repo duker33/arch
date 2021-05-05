@@ -1,0 +1,58 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "archlinux/archlinux"
+
+  # config.vm.synced_folder "data", "/vagrant_data"
+
+  config.vm.provider "virtualbox" do |v|
+      v.name = "Arch Sandbox Pure"
+      # v.gui = true
+      # setextradata "Arch Linux" "CustomVideoMode1" "1360x768x24"
+      # v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+      # video=1980x1024
+      v.customize ["setextradata", v.name, "CustomVideoMode1", "1980x1024x24"]
+
+      # Customize the amount of memory on the VM:
+      v.memory = "4096"
+  end
+  config.vm.provision "shell", inline: <<-SHELL
+    pacman-key --init
+    pacman-key --populate archlinux
+    pacman --noconfirm -R virtualbox-guest-utils-nox
+    pacman -Syu virtualbox-guest-utils
+    pacman --noconfirm -Syyu
+    pacman --noconfirm -S base-devel
+    pacman --noconfirm -S vim htop git hwinfo
+    # TODO - install yay from AUR
+    su vagrant
+    mkdir distr/ && cd distr/
+    git clone https://aur.archlinux.org/yay.git
+    cd yay/
+    makepkg -si
+    sudo pacman -S xmonad xmonad-contrib
+
+    # date > /etc/vagrant_provisioned_at
+    # gpasswd -a vagrant video
+    # pacman --noconfirm -S fluxbox awesome && echo startfluxbox > /home/vagrant/.xinitrc
+    # # if someone likes kde: pacman --noconfirm -S plasma-desktop konsole dolphin kscreen && echo startplasma-x11 > /home/vagrant/.xinitrc
+    # chown vagrant:vagrant /home/vagrant/.xinitrc # it looks like at this stage there is no /home/vagrant, so making .xinitrc may be required to be done manually
+    # pacman --noconfirm -S sddm
+    # systemctl enable sddm
+    # systemctl start sddm
+
+    # -- XORG section --
+    # pacman --noconfirm -S virtualbox-guest-{utils,dkms,iso}
+    # pacman --noconfirm -S \
+    #   xorg-server{,-common,-xwayland} \
+    #   xorg-xinit \
+    #   xf86-video-{fbdev,vesa} \
+    #   xorg-xcalc xterm xrandr \
+    #   \
+    #   lightdm \
+    #   fluxbox xmonad xterm dmenu \
+
+  SHELL
+
+end
